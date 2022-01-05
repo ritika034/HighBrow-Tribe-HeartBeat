@@ -5,13 +5,14 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>TriberSystem</module>
-		<module>user</module>
-		<module>client</module>
-		<module>client2</module>
+		<module>persistentSystem</module>
 		<module>communicator</module>
-		<module>restsystem</module>
+		<module>interestSystem</module>
 		<module>centralCore</module>
-        <module>testclient3</module>
+		<module>studentOne</module>
+		<module>studentTwo</module>
+        <module>studentThree</module>
+        <module>studentFour</module>
     </modules>
 	<parent>
 		<groupId>org.springframework.boot</groupId>

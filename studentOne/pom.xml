@@ -9,15 +9,14 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <packaging>jar</packaging>
-    <artifactId>communicator</artifactId>
-
-    <properties>
-        <akka.version>2.6.0-M8</akka.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-
+    <artifactId>client</artifactId>
     <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>com.example</groupId>
             <artifactId>centralCore</artifactId>
@@ -67,14 +66,13 @@
             <artifactId>akka-serialization-jackson_2.12</artifactId>
             <version>${akka.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.example</groupId>
-            <artifactId>user</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
     </dependencies>
 
+    <properties>
+        <akka.version>2.6.0-M8</akka.version>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
+    </properties>
     <build>
         <plugins>
             <!-- Plugin used to run Java programs -->
@@ -83,7 +81,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>service.actor.Communicator</mainClass>
+                    <mainClass>service.actor.StudentOne</mainClass>
                 </configuration>
             </plugin>
 
@@ -95,11 +93,12 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>service.actor.Communicator</mainClass>
+                            <mainClass>service.actor.StudentOne</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>

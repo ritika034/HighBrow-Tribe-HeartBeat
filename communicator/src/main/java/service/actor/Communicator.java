@@ -1,20 +1,26 @@
 package service.actor;
 
-import akka.actor.*;
-import service.centralCore.*;
+import akka.actor.AbstractActor;
+import akka.actor.ActorSelection;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
+import service.centralCore.UserInfo;
 import service.messages.*;
 
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
 public class Communicator extends AbstractActor {
     private static ActorSystem system;
+    private static ActorSelection persistanceActor;
     public static void main(String [] args){
-        System.out.println("1) Test here");
+
         system = ActorSystem.create();
         system.actorOf(Props.create(Communicator.class), "communicator");
-        System.out.println("2) Test here");
+        persistanceActor = system.actorSelection("akka.tcp://default@127.0.0.1:2552/user/userSystem");
+
     }
     private ActorSelection TriberActor = system.actorSelection("akka.tcp://default@127.0.0.1:2557/user/triber");
     //private HashMap<Long, Tribe> ActiveUsers = new HashMap<>();
@@ -25,10 +31,15 @@ public class Communicator extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
-                .match(String.class,
+                .match(ProblemSolvedResponse.class,
                         msg -> {
-                            System.out.println("test initializaogoe" + msg.toLowerCase(Locale.ROOT));
-//                            MatcherActor.tell(new TribeDetailRequest(msg.getUniqueId()), null);
+                            ActorSelection selection;
+                            for (UserInfo user : ActiveUsers.get(msg.getTribeId())) {
+                                long uniqueId = gitHubIdRequestId.get(user.getGitHubId());
+                                System.out.println("PortNumber : " + user.getPortNumber() + " Unique Id : " + uniqueId);
+                                selection = system.actorSelection("akka.tcp://default@127.0.0.1:" + user.getPortNumber() + "/user/" + uniqueId);
+                                selection.tell(new ChatMessageReceive("Bot : ", new Timestamp(System.currentTimeMillis()), msg.getUniqueId(), msg.getErrorMessage()), null);
+                            }
                         })
                 .match(ChatRegisterRequest.class,
                         msg -> {
@@ -50,15 +61,35 @@ public class Communicator extends AbstractActor {
                 .match(ChatMessageSend.class,
                         msg -> {
                             ActorSelection selection;
-                            for(UserInfo user : ActiveUsers.get(msg.getTribeId())){
-                                long uniqueId = gitHubIdRequestId.get(user.getGitHubId());
-                                if( uniqueId != msg.getUniqueId()) {
-                                    System.out.println("PortNumber : " + user.getPortNumber() +" Unique Id : "+ uniqueId);
-                                    selection = system.actorSelection("akka.tcp://default@127.0.0.1:" + user.getPortNumber() + "/user/" + uniqueId);
-                                    selection.tell(new ChatMessageReceive(msg.getSenderName(), msg.getSentTime(), msg.getUniqueId(), msg.getMessage()), null);
+                            if(msg.getMessage().equals("!problem question")){
+                              //Make call to database to fetch question for the tribe
+                              persistanceActor.tell(new FetchQuestionForTribeRequest(msg.getUniqueId(),msg.getTribeId()),getSelf());
+                            }
+                            else if(msg.getMessage().equals("!problem solved")){
+                              persistanceActor.tell(new TribeDetailRequest(msg.getUniqueId(),msg.getTribeId())
+                                        ,getSelf());
+                            }
+                            else {
+                                for (UserInfo user : ActiveUsers.get(msg.getTribeId())) {
+                                    long uniqueId = gitHubIdRequestId.get(user.getGitHubId());
+                                    if (uniqueId != msg.getUniqueId()) {
+                                        System.out.println("PortNumber : " + user.getPortNumber() + " Unique Id : " + uniqueId);
+                                        selection = system.actorSelection("akka.tcp://default@127.0.0.1:" + user.getPortNumber() + "/user/" + uniqueId);
+                                        selection.tell(new ChatMessageReceive(msg.getSenderName(), msg.getSentTime(), msg.getUniqueId(), msg.getMessage()), null);
+                                    }
                                 }
                             }
                         })
+                .match(FetchQuestionForTribeResponse.class, msg->{
+                    for (UserInfo user : ActiveUsers.get(msg.getTribeId())) {
+                        long uniqueId = gitHubIdRequestId.get(user.getGitHubId());
+                        if (uniqueId == msg.getUniqueId()) {
+                            System.out.println("PortNumber : " + user.getPortNumber() + " Unique Id : " + uniqueId);
+                            ActorSelection selection = system.actorSelection("akka.tcp://default@127.0.0.1:" + user.getPortNumber() + "/user/" + uniqueId);
+                            selection.tell(new ChatMessageReceive("Bot : ", new Timestamp(System.currentTimeMillis()), msg.getUniqueId(), msg.getQuestion()), null);
+                        }
+                    }
+                })
                 .match(ChatMessageReceive.class,
                         msg -> {
 //                            ActiveUsers.put(msg.getUniqueId(), msg.getTribe());

@@ -22,13 +22,10 @@ public class Triber extends AbstractActor {
     ArrayList<UserInfo> allUserInfo = new ArrayList<>();
 
     public static void main(String[] args){
-        System.out.println("1) Test here");
         system = ActorSystem.create();
         ActorRef ref = system.actorOf(Props.create(Triber.class), "triber");
         interestsActor = system.actorSelection("akka.tcp://default@127.0.0.1:2554/user/interests");
         persistanceActor = system.actorSelection("akka.tcp://default@127.0.0.1:2552/user/userSystem");
-
-        System.out.println("2) Test here");
         persistanceActor.tell("InitializeTriberSystem", ref);
     }
 
