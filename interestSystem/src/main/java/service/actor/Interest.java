@@ -25,6 +25,10 @@ public class Interest extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
+                .match(HeartBeat.class,
+                        msg -> {
+                            getSender().tell(new HeartBeat("Rest Module"), null);
+                        })
                 .match(InterestsRequest.class,
                         msg -> {
                             HashSet<String> programmingLanguages = getUserLanguages(msg.getGithubUserId());

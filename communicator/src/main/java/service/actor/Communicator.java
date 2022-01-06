@@ -31,6 +31,10 @@ public class Communicator extends AbstractActor {
     @Override
     public Receive createReceive() {
         return receiveBuilder()
+                .match(HeartBeat.class,
+                        msg -> {
+                            getSender().tell(new HeartBeat("Communicator Module"), null);
+                        })
                 .match(ProblemSolvedResponse.class,
                         msg -> {
                             ActorSelection selection;

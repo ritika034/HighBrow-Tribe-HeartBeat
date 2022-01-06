@@ -19,6 +19,7 @@ public class StudentFour extends AbstractActor {
     private static UserInfo userInfo;
     private static UserRequest userRequest;
     private static Boolean IsInChat = false;
+    private static int portNumber = 2560;
 
     public static void main(String [] args) throws IOException {
         system = ActorSystem.create();
@@ -36,7 +37,7 @@ public class StudentFour extends AbstractActor {
                 new InputStreamReader(System.in));
 //        System.out.println("Enter your Port number");
 //        String portNumber = reader.readLine();
-        userInfo.setPortNumber(2558);
+        userInfo.setPortNumber(portNumber);
         System.out.println("Enter your name");
         String userName = reader.readLine();
         userInfo.setName(userName);
