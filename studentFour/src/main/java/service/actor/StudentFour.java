@@ -36,7 +36,7 @@ public class StudentFour extends AbstractActor {
                 new InputStreamReader(System.in));
 //        System.out.println("Enter your Port number");
 //        String portNumber = reader.readLine();
-        userInfo.setPortNumber(2560);
+        userInfo.setPortNumber(2558);
         System.out.println("Enter your name");
         String userName = reader.readLine();
         userInfo.setName(userName);
@@ -80,14 +80,21 @@ public class StudentFour extends AbstractActor {
                     System.out.println("You are redirected to register for the Tribe's group chat...");
                     userRequest.setUniqueId(uniqueId);
                     userInfo.setTribeId(msg.getTribeId());
-                    setReference(uniqueId);
+                    String tempRef = ref.toString();
+                    int startIndex = tempRef.lastIndexOf("/")+1;
+                    int endIndex = tempRef.indexOf("#");
+                    String uid = tempRef.substring(startIndex,endIndex);
+                    long uniqueIdtemp = Long.parseLong(uid);
+                    if(uniqueIdtemp != uniqueId){
+                        setReference(uniqueId);
+                    }
                     ChatRegisterRequest chatRegisterRequest = new ChatRegisterRequest(uniqueId,userInfo);
                     communicationSelection.tell(chatRegisterRequest,getSelf());
                 })
                 .match(UserResponse.class,msg->{
                     BufferedReader reader = new BufferedReader(
                             new InputStreamReader(System.in));
-                    System.out.println("Enter your GitHub Id");
+                    System.out.println(msg.getErrorMessage()+"\nEnter GitHub Id");
                     String githubId = reader.readLine();
                     userInfo.setGitHubId(githubId);
                     triberSelection.tell(userRequest, ref);
@@ -105,7 +112,7 @@ public class StudentFour extends AbstractActor {
                             sb.append(UI.getName()).append(", ");
                         }
 
-                        tribe.toString();
+                        System.out.println(tribe);
                         //System.out.println("Tribe ID: " + tribe.getTribeId() + ", Programming Language: " + tribe.getTribeLanguages() + ", Tribe Name: " + tribe.getTribeName() + "_Tribe, Members: " + sb);
                     }
                     System.out.println("Enter the ID of the tribe you would like to join");
@@ -116,6 +123,7 @@ public class StudentFour extends AbstractActor {
 //                            .stream().filter(tribe->tribe.getTribeId()==tribeId)
 //                            .findFirst().get().getTribeName();
                         userRequest.setUniqueId(msg.getUniqueId());
+
                         setReference(msg.getUniqueId());
                         userInfo.setTribeId(tribeId);
 
@@ -138,8 +146,7 @@ public class StudentFour extends AbstractActor {
             Timestamp ts;
             while(true) {
                 message = reader.readLine();
-                System.out.println("[" + new Timestamp(System.currentTimeMillis())+ "] " + userInfo.getName() + ": ");
-
+                //System.out.println("[" + new Timestamp(System.currentTimeMillis())+ "] " + userInfo.getName() + ": ");
                 ts = new Timestamp(System.currentTimeMillis());
                 // Printing the read line
                 communicationSelection.tell(new ChatMessageSend(userInfo.getName(), ts, userRequest.getUniqueId(), userInfo.getTribeId(), message), getSelf());

@@ -14,11 +14,11 @@ public class ChatRegisterResponse implements MySerializable {
         this.tribe = tribe;
     }
 
-    public Tribe getTribe() {
-        return tribe;
-    }
-
-    public void setTribe(Tribe tribe) {
-        this.tribe = tribe;
-    }
+//    public Tribe getTribe() {
+//        return tribe;
+//    }
+//
+//    public void setTribe(Tribe tribe) {
+//        this.tribe = tribe;
+//    }
 }

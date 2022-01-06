@@ -20,7 +20,7 @@ public class StudentThree extends AbstractActor {
     private static UserRequest userRequest;
     private static Boolean IsInChat = false;
 
-    public static void main(String [] args){
+    public static void main(String [] args) throws IOException {
         system = ActorSystem.create();
         communicationSelection =
                 system.actorSelection("akka.tcp://default@127.0.0.1:2556/user/communicator");
@@ -32,9 +32,17 @@ public class StudentThree extends AbstractActor {
         long uniqueId = rand.nextInt() + rand.nextInt();
         uniqueId = Math.abs(uniqueId);
         //userInfo.setUniqueId(uniqueId);
-        userInfo.setPortNumber(2559);
-        userInfo.setName("sid");
-        userInfo.setGitHubId("siddharthucd");
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(System.in));
+//        System.out.println("Enter your Port number");
+//        String portNumber = reader.readLine();
+        userInfo.setPortNumber(2558);
+        System.out.println("Enter your name");
+        String userName = reader.readLine();
+        userInfo.setName(userName);
+        System.out.println("Enter your GitHub Id");
+        String githubId = reader.readLine();
+        userInfo.setGitHubId(githubId);
         setReference(uniqueId);
 
         userRequest = new UserRequest(uniqueId,userInfo);
@@ -72,9 +80,24 @@ public class StudentThree extends AbstractActor {
                     System.out.println("You are redirected to register for the Tribe's group chat...");
                     userRequest.setUniqueId(uniqueId);
                     userInfo.setTribeId(msg.getTribeId());
-                    setReference(uniqueId);
+                    String tempRef = ref.toString();
+                    int startIndex = tempRef.lastIndexOf("/")+1;
+                    int endIndex = tempRef.indexOf("#");
+                    String uid = tempRef.substring(startIndex,endIndex);
+                    long uniqueIdtemp = Long.parseLong(uid);
+                    if(uniqueIdtemp != uniqueId){
+                        setReference(uniqueId);
+                    }
                     ChatRegisterRequest chatRegisterRequest = new ChatRegisterRequest(uniqueId,userInfo);
                     communicationSelection.tell(chatRegisterRequest,getSelf());
+                })
+                .match(UserResponse.class,msg->{
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(System.in));
+                    System.out.println(msg.getErrorMessage()+"\nEnter GitHub Id");
+                    String githubId = reader.readLine();
+                    userInfo.setGitHubId(githubId);
+                    triberSelection.tell(userRequest, ref);
                 })
                 .match(TribeSuggestionRequest.class, msg->{
                     BufferedReader reader = new BufferedReader(
@@ -89,7 +112,7 @@ public class StudentThree extends AbstractActor {
                             sb.append(UI.getName()).append(", ");
                         }
 
-                        tribe.toString();
+                        System.out.println(tribe);
                         //System.out.println("Tribe ID: " + tribe.getTribeId() + ", Programming Language: " + tribe.getTribeLanguages() + ", Tribe Name: " + tribe.getTribeName() + "_Tribe, Members: " + sb);
                     }
                     System.out.println("Enter the ID of the tribe you would like to join");
@@ -100,6 +123,7 @@ public class StudentThree extends AbstractActor {
 //                            .stream().filter(tribe->tribe.getTribeId()==tribeId)
 //                            .findFirst().get().getTribeName();
                         userRequest.setUniqueId(msg.getUniqueId());
+
                         setReference(msg.getUniqueId());
                         userInfo.setTribeId(tribeId);
 
@@ -122,11 +146,11 @@ public class StudentThree extends AbstractActor {
             Timestamp ts;
             while(true) {
                 message = reader.readLine();
-                System.out.println("[" + new Timestamp(System.currentTimeMillis())+ "] " + userInfo.getName() + ": ");
+                //System.out.println("[" + new Timestamp(System.currentTimeMillis())+ "] " + userInfo.getName() + ": ");
                 ts = new Timestamp(System.currentTimeMillis());
-
                 // Printing the read line
                 communicationSelection.tell(new ChatMessageSend(userInfo.getName(), ts, userRequest.getUniqueId(), userInfo.getTribeId(), message), getSelf());
+
             }
         }
         catch(IOException ex){

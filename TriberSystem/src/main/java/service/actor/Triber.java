@@ -52,46 +52,57 @@ public class Triber extends AbstractActor {
                     }else
                     {
                         UserResponse userResponse = new UserResponse(msg.getUniqueId(),"Github ID already registered, Please use a different GitHub Id");
-                        ActorSelection clientActor = system.actorSelection("akka.tcp://default@127.0.0.1:"+msg.getNewUser().getPortNumber()+"/user/"+msg.getUniqueId());
+                        ActorSelection clientActor = system.actorSelection("akka.tcp://default@127.0.0.1:"+msg.getNewUser().getPortNumber()+"/user/"+uniqueIdMap.get(msg.getUniqueId()));
                         clientActor.tell(userResponse, null);
                     }
                     })
             .match(InterestsResponse.class,
                 msg -> {
-                    System.out.println("Received Interests response from Interests System for User :"+requestsToUserInfoMap.get(msg.getUniqueId()).getName()+" Unique ID:"+ msg.getUniqueId());
-                    requestsToUserInfoMap.get(msg.getUniqueId()).setInterests(msg.getInterest());
-
-                    TribeSuggestionRequest tribeSuggestionRequest = new TribeSuggestionRequest();
-                    //Fetch tribe suggestion for the user based on his interest
-                    Set<Tribe> suggestedTribe = getTribeSuggestions(msg.getInterest());
-
-                    if(suggestedTribe.size() == 0){
-                        System.out.println("New Tribe Creation as no tribe for the user interests exists");
-                        String tribeLanguage = "";
-                        tribeLanguage = msg.getInterest().getProgrammingLanguages().stream().findFirst().get();
-                        long tribeID = ++tribeUniqueId;
-                        requestsToUserInfoMap.get(msg.getUniqueId()).setTribeId(tribeID);
-                        UserCreationRequest userCreationRequest = new UserCreationRequest(msg.getUniqueId(),requestsToUserInfoMap.get(msg.getUniqueId()),tribeLanguage);
-                        persistanceActor.tell(userCreationRequest, getSelf());
+                    if(msg.getInterest().getProgrammingLanguages() == null){
+                        //Invalid github Id
+                        UserResponse userResponse = new UserResponse(msg.getUniqueId(),"GitHub ID is invalid, Please use a different GitHub Id");
+                        ActorSelection clientActor = system.actorSelection("akka.tcp://default@127.0.0.1:"+requestsToUserInfoMap.get(msg.getUniqueId()).getPortNumber()+"/user/"+uniqueIdMap.get(msg.getUniqueId()));
+                        clientActor.tell(userResponse, null);
                     }
-                    else if(suggestedTribe.size() == 1){
-                        System.out.println("One member tribe exists for the user interests");
-                        Tribe tribe = suggestedTribe.stream().findFirst().get();
-                        UserInfo currUser = requestsToUserInfoMap.get(msg.getUniqueId());
-                        String tribeLanguage = getTribeName(tribe);
-                        currUser.setTribeId(tribe.getTribeId());
-                        requestsToUserInfoMap.get(msg.getUniqueId()).setTribeId(tribe.getTribeId());
-                        UserCreationRequest UCR = new UserCreationRequest(msg.getUniqueId(), currUser,tribeLanguage);
-                        persistanceActor.tell(UCR, getSelf());
-                    }
-                    else{
-                        System.out.println("User must select the tribe he wishes to join");
-                        UserInfo userInfo = requestsToUserInfoMap.get(msg.getUniqueId());
-                        ActorSelection clientActor = system.actorSelection("akka.tcp://default@127.0.0.1:" + userInfo.getPortNumber() + "/user/" + uniqueIdMap.get(msg.getUniqueId()));
-                        tribeSuggestionRequest.setUniqueId(msg.getUniqueId());
-                        tribeSuggestionRequest.setSuggestedTribes(suggestedTribe);
-                        //Prompting the client to make tribe selection
-                        clientActor.tell(tribeSuggestionRequest, null);
+                    else if (msg.getInterest().getProgrammingLanguages().size() == 0) {
+                        //No Programming languages found for the user
+                        UserResponse userResponse = new UserResponse(msg.getUniqueId(),"GitHub ID has no programming repositories, Please use a different GitHub Id");
+                        ActorSelection clientActor = system.actorSelection("akka.tcp://default@127.0.0.1:"+requestsToUserInfoMap.get(msg.getUniqueId()).getPortNumber()+"/user/"+uniqueIdMap.get(msg.getUniqueId()));
+                        clientActor.tell(userResponse, null);
+                    } else {
+                        System.out.println("Received Interests response from Interests System for User :" + requestsToUserInfoMap.get(msg.getUniqueId()).getName() + " Unique ID:" + msg.getUniqueId());
+                        requestsToUserInfoMap.get(msg.getUniqueId()).setInterests(msg.getInterest());
+
+                        TribeSuggestionRequest tribeSuggestionRequest = new TribeSuggestionRequest();
+                        //Fetch tribe suggestion for the user based on his interest
+                        Set<Tribe> suggestedTribe = getTribeSuggestions(msg.getInterest());
+
+                        if (suggestedTribe.size() == 0) {
+                            System.out.println("New Tribe Creation as no tribe for the user interests exists");
+                            String tribeLanguage = "";
+                            tribeLanguage = msg.getInterest().getProgrammingLanguages().stream().findFirst().get();
+                            long tribeID = ++tribeUniqueId;
+                            requestsToUserInfoMap.get(msg.getUniqueId()).setTribeId(tribeID);
+                            UserCreationRequest userCreationRequest = new UserCreationRequest(msg.getUniqueId(), requestsToUserInfoMap.get(msg.getUniqueId()), tribeLanguage);
+                            persistanceActor.tell(userCreationRequest, getSelf());
+                        } else if (suggestedTribe.size() == 1) {
+                            System.out.println("One member tribe exists for the user interests");
+                            Tribe tribe = suggestedTribe.stream().findFirst().get();
+                            UserInfo currUser = requestsToUserInfoMap.get(msg.getUniqueId());
+                            String tribeLanguage = getTribeName(tribe);
+                            currUser.setTribeId(tribe.getTribeId());
+                            requestsToUserInfoMap.get(msg.getUniqueId()).setTribeId(tribe.getTribeId());
+                            UserCreationRequest UCR = new UserCreationRequest(msg.getUniqueId(), currUser, tribeLanguage);
+                            persistanceActor.tell(UCR, getSelf());
+                        } else {
+                            System.out.println("User must select the tribe he wishes to join");
+                            UserInfo userInfo = requestsToUserInfoMap.get(msg.getUniqueId());
+                            ActorSelection clientActor = system.actorSelection("akka.tcp://default@127.0.0.1:" + userInfo.getPortNumber() + "/user/" + uniqueIdMap.get(msg.getUniqueId()));
+                            tribeSuggestionRequest.setUniqueId(msg.getUniqueId());
+                            tribeSuggestionRequest.setSuggestedTribes(suggestedTribe);
+                            //Prompting the client to make tribe selection
+                            clientActor.tell(tribeSuggestionRequest, null);
+                        }
                     }
                 })
             .match(TribeDetailRequest.class,

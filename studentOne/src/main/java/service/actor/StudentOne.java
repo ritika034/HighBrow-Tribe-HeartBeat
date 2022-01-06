@@ -36,7 +36,7 @@ public class StudentOne extends AbstractActor {
                 new InputStreamReader(System.in));
 //        System.out.println("Enter your Port number");
 //        String portNumber = reader.readLine();
-        userInfo.setPortNumber(2555);
+        userInfo.setPortNumber(2558);
         System.out.println("Enter your name");
         String userName = reader.readLine();
         userInfo.setName(userName);
@@ -55,77 +55,85 @@ public class StudentOne extends AbstractActor {
     @Override
     public AbstractActor.Receive createReceive() {
         return  receiveBuilder()
-            .match(ChatRegisterResponse.class, msg->{
-                Tribe currentTribe = msg.getTribe();
-                System.out.println("You have joined the community dialogue of " + currentTribe.getTribeName());
-                Thread thread = new Thread(() -> {
-                    IsInChat = true;
-                    ParticipateInChat();
-                });
-                thread.start();
-            })
-            .match(ChatMessageReceive.class, msg->{
-                System.out.println("[" + msg.getSentTime() + "] " + msg.getSenderName() + ": " + msg.getMessage());
-
-                Thread thread = new Thread(this::ParticipateInChat);
-
-                if(!IsInChat){
-                    IsInChat = true;
+                .match(ChatRegisterResponse.class, msg->{
+                    Tribe currentTribe = msg.getTribe();
+                    System.out.println("You have joined the community dialogue of " + currentTribe.getTribeName());
+                    Thread thread = new Thread(() -> {
+                        IsInChat = true;
+                        ParticipateInChat();
+                    });
                     thread.start();
-                }
-            })
-            .match(UserCreationResponse.class,msg->{
-                long uniqueId = msg.getUniqueId();
-                System.out.println("Your ID for future reference :"+uniqueId);
-                System.out.println("You are redirected to register for the Tribe's group chat...");
-                userRequest.setUniqueId(uniqueId);
-                userInfo.setTribeId(msg.getTribeId());
-                setReference(uniqueId);
-                ChatRegisterRequest chatRegisterRequest = new ChatRegisterRequest(uniqueId,userInfo);
-                communicationSelection.tell(chatRegisterRequest,getSelf());
-            })
-            .match(UserResponse.class,msg->{
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(System.in));
-                System.out.println("Enter your GitHub Id");
-                String githubId = reader.readLine();
-                userInfo.setGitHubId(githubId);
-                triberSelection.tell(userRequest, ref);
-            })
-            .match(TribeSuggestionRequest.class, msg->{
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(System.in));
-                StringBuilder sb;
-                System.out.println("Received following tribe suggestions for you !");
-                //String tribeId = reader.readLine();
-                for(Tribe tribe:msg.getSuggestedTribes()){
-                    sb = new StringBuilder();
+                })
+                .match(ChatMessageReceive.class, msg->{
+                    System.out.println("[" + msg.getSentTime() + "] " + msg.getSenderName() + ": " + msg.getMessage());
 
-                    for(UserInfo UI:tribe.getMembers()){
-                        sb.append(UI.getName()).append(", ");
+                    Thread thread = new Thread(this::ParticipateInChat);
+
+                    if(!IsInChat){
+                        IsInChat = true;
+                        thread.start();
                     }
+                })
+                .match(UserCreationResponse.class,msg->{
+                    long uniqueId = msg.getUniqueId();
+                    System.out.println("Your ID for future reference :"+uniqueId);
+                    System.out.println("You are redirected to register for the Tribe's group chat...");
+                    userRequest.setUniqueId(uniqueId);
+                    userInfo.setTribeId(msg.getTribeId());
+                    String tempRef = ref.toString();
+                    int startIndex = tempRef.lastIndexOf("/")+1;
+                    int endIndex = tempRef.indexOf("#");
+                    String uid = tempRef.substring(startIndex,endIndex);
+                    long uniqueIdtemp = Long.parseLong(uid);
+                    if(uniqueIdtemp != uniqueId){
+                        setReference(uniqueId);
+                    }
+                    ChatRegisterRequest chatRegisterRequest = new ChatRegisterRequest(uniqueId,userInfo);
+                    communicationSelection.tell(chatRegisterRequest,getSelf());
+                })
+                .match(UserResponse.class,msg->{
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(System.in));
+                    System.out.println(msg.getErrorMessage()+"\nEnter GitHub Id");
+                    String githubId = reader.readLine();
+                    userInfo.setGitHubId(githubId);
+                    triberSelection.tell(userRequest, ref);
+                })
+                .match(TribeSuggestionRequest.class, msg->{
+                    BufferedReader reader = new BufferedReader(
+                            new InputStreamReader(System.in));
+                    StringBuilder sb;
+                    System.out.println("Received following tribe suggestions for you !");
+                    //String tribeId = reader.readLine();
+                    for(Tribe tribe:msg.getSuggestedTribes()){
+                        sb = new StringBuilder();
 
-                    tribe.toString();
-                    //System.out.println("Tribe ID: " + tribe.getTribeId() + ", Programming Language: " + tribe.getTribeLanguages() + ", Tribe Name: " + tribe.getTribeName() + "_Tribe, Members: " + sb);
-                }
-                System.out.println("Enter the ID of the tribe you would like to join");
-                String tribeIdString = reader.readLine();
-                try {
-                    long tribeId = Long.parseLong(tribeIdString);
+                        for(UserInfo UI:tribe.getMembers()){
+                            sb.append(UI.getName()).append(", ");
+                        }
+
+                        System.out.println(tribe);
+                        //System.out.println("Tribe ID: " + tribe.getTribeId() + ", Programming Language: " + tribe.getTribeLanguages() + ", Tribe Name: " + tribe.getTribeName() + "_Tribe, Members: " + sb);
+                    }
+                    System.out.println("Enter the ID of the tribe you would like to join");
+                    String tribeIdString = reader.readLine();
+                    try {
+                        long tribeId = Long.parseLong(tribeIdString);
 //                    String tribeName = msg.getSuggestedTribes()
 //                            .stream().filter(tribe->tribe.getTribeId()==tribeId)
 //                            .findFirst().get().getTribeName();
-                    userRequest.setUniqueId(msg.getUniqueId());
-                    setReference(msg.getUniqueId());
-                    userInfo.setTribeId(tribeId);
+                        userRequest.setUniqueId(msg.getUniqueId());
 
-                    TribeSuggestionResponse tribeSuggestionResponse = new TribeSuggestionResponse(msg.getUniqueId(),tribeId);
-                    triberSelection.tell(tribeSuggestionResponse, getSelf());
-                }
-                catch(Exception ex){
-                    System.out.print("Invalid Input! Restart application");
-                }
-            }).build();
+                        setReference(msg.getUniqueId());
+                        userInfo.setTribeId(tribeId);
+
+                        TribeSuggestionResponse tribeSuggestionResponse = new TribeSuggestionResponse(msg.getUniqueId(),tribeId);
+                        triberSelection.tell(tribeSuggestionResponse, getSelf());
+                    }
+                    catch(Exception ex){
+                        System.out.print("Invalid Input! Restart application");
+                    }
+                }).build();
     }
 
     private void ParticipateInChat() {
@@ -137,9 +145,8 @@ public class StudentOne extends AbstractActor {
             String message;
             Timestamp ts;
             while(true) {
-
                 message = reader.readLine();
-                System.out.println("[" + new Timestamp(System.currentTimeMillis())+ "] " + userInfo.getName() + ": ");
+                //System.out.println("[" + new Timestamp(System.currentTimeMillis())+ "] " + userInfo.getName() + ": ");
                 ts = new Timestamp(System.currentTimeMillis());
                 // Printing the read line
                 communicationSelection.tell(new ChatMessageSend(userInfo.getName(), ts, userRequest.getUniqueId(), userInfo.getTribeId(), message), getSelf());

@@ -33,19 +33,19 @@ public class ChatMessageSend implements MySerializable {
         //Instant temp;
     }
 
-    public long getUniqueId() {
-        return uniqueId;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public String getSenderName() {
-        return senderName;
-    }
-
-    public Timestamp getSentTime() {
-        return sentTime;
-    }
+//    public long getUniqueId() {
+//        return uniqueId;
+//    }
+//
+//    public String getMessage() {
+//        return message;
+//    }
+//
+//    public String getSenderName() {
+//        return senderName;
+//    }
+//
+//    public Timestamp getSentTime() {
+//        return sentTime;
+//    }
 }

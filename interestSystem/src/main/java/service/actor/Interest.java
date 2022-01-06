@@ -4,7 +4,9 @@ import akka.actor.*;
 import jnr.ffi.annotations.In;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import service.centralCore.*;
 import service.messages.*;
@@ -40,9 +42,16 @@ public class Interest extends AbstractActor {
     }
     private JSONArray callExternalSystem(String url) {
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = restTemplate.getForEntity(url,String.class);
-        JSONArray jsonArray  = response.getBody()!=null ? new JSONArray(response.getBody()):null;
-        return jsonArray;
+        try{
+            ResponseEntity<String> response = restTemplate.getForEntity(url,String.class);
+            JSONArray jsonArray = new JSONArray(response.getBody());
+            return jsonArray;
+        }
+        catch (HttpClientErrorException ex){
+            System.out.println("Invalid User Id, Not found in GitHub");
+            return null;
+        }
+
     }
 
     private HashSet<String> userProgrammingLanguageInterests(JSONArray jsonArray){
